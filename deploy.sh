@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# VolGuard 3.3 FastAPI - Deployment Script
+# VolGuard 3.3 FastAPI - Simplified Deployment (No Grafana)
 # This script automates the deployment process
 
 set -e
@@ -34,7 +34,7 @@ echo -e "${GREEN}✓ Docker and Docker Compose found${NC}"
 # Create necessary directories
 echo ""
 echo "Creating directory structure..."
-mkdir -p config volguard_data volguard_logs
+mkdir -p volguard_data volguard_logs
 
 # Check if volguard_3.3.py exists
 if [ ! -f "volguard_3.3.py" ]; then
@@ -48,24 +48,12 @@ echo -e "${GREEN}✓ Application file found${NC}"
 # Check if .env exists
 if [ ! -f ".env" ]; then
     echo -e "${YELLOW}WARNING: .env file not found${NC}"
-    echo "Creating template .env file..."
-    echo "Please edit .env with your actual credentials before deploying!"
-    # Create basic .env template
-    cat > .env << 'EOF'
-VG_ENV=PRODUCTION
-VG_DRY_RUN=TRUE
-UPSTOX_ACCESS_TOKEN=your_token_here
-TELEGRAM_BOT_TOKEN=your_token_here
-TELEGRAM_CHAT_ID=your_chat_id_here
-GROQ_API_KEY=your_key_here
-VG_BASE_CAPITAL=1000000
-EOF
-    echo -e "${YELLOW}Please edit .env file now and press Enter to continue...${NC}"
-    read
+    echo "Please create .env file from env_template.txt"
+    exit 1
 fi
 
 # Check if credentials are configured
-if grep -q "your_token_here" .env 2>/dev/null; then
+if grep -q "your_token_here\|your_actual_token\|your_key_here" .env 2>/dev/null; then
     echo -e "${RED}ERROR: Please configure your credentials in .env file${NC}"
     echo "Required: UPSTOX_ACCESS_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, GROQ_API_KEY"
     exit 1
@@ -100,20 +88,20 @@ echo -e "${GREEN}✓ Docker image built successfully${NC}"
 
 # Start services
 echo ""
-echo "Starting VolGuard services..."
+echo "Starting VolGuard service..."
 docker-compose up -d
 
 if [ $? -ne 0 ]; then
-    echo -e "${RED}ERROR: Failed to start services${NC}"
+    echo -e "${RED}ERROR: Failed to start service${NC}"
     exit 1
 fi
 
-# Wait for services to start
+# Wait for service to start
 echo ""
-echo "Waiting for services to start..."
+echo "Waiting for service to start..."
 sleep 10
 
-# Check if services are running
+# Check if service is running
 if docker ps | grep -q "volguard_fastapi"; then
     echo -e "${GREEN}✓ VolGuard container is running${NC}"
 else
@@ -125,15 +113,21 @@ fi
 # Test health endpoint
 echo ""
 echo "Testing API endpoint..."
-HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health || echo "000")
-
-if [ "$HEALTH_CHECK" = "200" ]; then
-    echo -e "${GREEN}✓ API is responding (HTTP 200)${NC}"
-else
-    echo -e "${YELLOW}WARNING: API not responding yet (HTTP $HEALTH_CHECK)${NC}"
-    echo "This is normal if the service is still initializing"
-    echo "Check status with: curl http://localhost:8000/health"
-fi
+for i in {1..5}; do
+    HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health 2>/dev/null || echo "000")
+    if [ "$HEALTH_CHECK" = "200" ]; then
+        echo -e "${GREEN}✓ API is responding (HTTP 200)${NC}"
+        break
+    else
+        if [ $i -eq 5 ]; then
+            echo -e "${YELLOW}WARNING: API not responding yet (HTTP $HEALTH_CHECK)${NC}"
+            echo "Check logs with: docker-compose logs volguard"
+        else
+            echo "Attempt $i/5: Waiting for API to start..."
+            sleep 5
+        fi
+    fi
+done
 
 # Show deployment info
 echo ""
@@ -143,31 +137,44 @@ echo "=========================================="
 echo ""
 echo "📊 Access Points:"
 echo "  - API: http://localhost:8000"
-echo "  - API Docs: http://localhost:8000/docs"
+echo "  - API Docs: http://localhost:8000/docs (FastAPI auto-generated)"
 echo "  - Health Check: http://localhost:8000/health"
-echo "  - Grafana: http://localhost:3000 (admin/volguard2024)"
 echo ""
 echo "🔧 Useful Commands:"
 echo "  - View logs: docker-compose logs -f volguard"
 echo "  - Restart: docker-compose restart volguard"
 echo "  - Stop: docker-compose down"
+echo "  - Check status: docker ps"
+echo ""
+echo "🚀 API Testing:"
+echo "  - Check health: curl http://localhost:8000/health"
+echo "  - Market status: curl http://localhost:8000/market/status"
 echo "  - Start trading: curl -X POST http://localhost:8000/trading/start"
+echo "  - Portfolio status: curl http://localhost:8000/portfolio/status"
+echo "  - Stop trading: curl -X POST http://localhost:8000/trading/stop"
+echo "  - Emergency exit: curl -X POST http://localhost:8000/positions/exit-all"
 echo ""
 echo "⚠️  IMPORTANT:"
 echo "  - System is in DRY RUN mode (VG_DRY_RUN=TRUE)"
-echo "  - Monitor Telegram notifications"
+echo "  - Monitor Telegram notifications carefully"
 echo "  - Test thoroughly before enabling live trading"
+echo "  - Change VG_DRY_RUN=FALSE in .env for live trading"
 echo ""
 echo "📝 Next Steps:"
 echo "  1. Monitor logs: docker-compose logs -f volguard"
-echo "  2. Check health: curl http://localhost:8000/health"
-echo "  3. Test API: curl http://localhost:8000/market/status"
-echo "  4. When ready, start trading: curl -X POST http://localhost:8000/trading/start"
+echo "  2. Test API: curl http://localhost:8000/health"
+echo "  3. Check market: curl http://localhost:8000/market/status"
+echo "  4. When ready: curl -X POST http://localhost:8000/trading/start"
 echo ""
 echo "=========================================="
 
-# Show live logs
+# Offer to show live logs
 echo ""
-echo "Showing live logs (Ctrl+C to exit)..."
-echo ""
-docker-compose logs -f volguard
+read -p "Show live logs now? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    echo "Showing live logs (Ctrl+C to exit)..."
+    echo ""
+    docker-compose logs -f volguard
+fi
