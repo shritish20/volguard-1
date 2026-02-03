@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: VolGuard SQLite
+    type: frser-sqlite-datasource
+    access: proxy
+    isDefault: true
+    jsonData:
+      path: /var/lib/grafana/data/volguard_mount/volguard.db
+    editable: true
+    version: 1

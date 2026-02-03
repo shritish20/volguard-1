@@ -1,0 +1,21 @@
+# Web Framework (FastAPI)
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
+# Core Data & Math
+requests>=2.31.0
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+pytz>=2023.3
+
+# Broker Integration
+upstox-python-sdk>=2.19.0
+
+# AI & Market Data
+groq>=0.4.0
+yfinance>=0.2.36
+
+# Utilities
+python-multipart>=0.0.6

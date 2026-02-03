@@ -1,0 +1,61 @@
+# ========================================
+# VolGuard 3.3 FastAPI - Environment Variables
+# ========================================
+
+# Environment Configuration
+VG_ENV=PRODUCTION
+VG_DRY_RUN=TRUE  # Set to FALSE for live trading (USE WITH CAUTION!)
+
+# ========================================
+# Upstox Broker Credentials
+# ========================================
+UPSTOX_ACCESS_TOKEN=your_access_token_here
+UPSTOX_CLIENT_ID=your_client_id_here
+UPSTOX_CLIENT_SECRET=your_client_secret_here
+UPSTOX_REDIRECT_URI=http://localhost:8000/callback
+UPSTOX_REFRESH_TOKEN=your_refresh_token_here
+
+# ========================================
+# Telegram Notifications
+# ========================================
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+TELEGRAM_CHAT_ID=your_telegram_chat_id_here
+
+# ========================================
+# AI Integration (Groq)
+# ========================================
+GROQ_API_KEY=your_groq_api_key_here
+
+# ========================================
+# Trading Parameters
+# ========================================
+VG_BASE_CAPITAL=1000000
+VG_MAX_LOSS_PER_TRADE=50000
+VG_MAX_CAPITAL_PER_TRADE=300000
+MAX_TRADES_PER_DAY=3
+VG_MAX_DRAWDOWN_PCT=0.15
+
+# ========================================
+# Risk Management
+# ========================================
+VG_MAX_SAME_EXPIRY=1
+VG_ATM_OVERLAP=0.02
+VG_VEGA_CONC=0.70
+VG_THETA_CONC=0.70
+VG_CAPITAL_EXPIRY=0.40
+
+# ========================================
+# File Paths (Inside Container)
+# ========================================
+VG_DB_PATH=/app/data/volguard.db
+VG_LOG_DIR=/app/logs
+VG_KILL_SWITCH_FILE=/app/data/KILL_SWITCH
+
+# ========================================
+# Advanced Settings
+# ========================================
+# Auto-confirmation for live trading (DANGEROUS - use only in production)
+VG_AUTO_CONFIRM=FALSE
+
+# Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=INFO
